@@ -32,6 +32,7 @@ async function handleSearch() {
   const fontSize = document.getElementById('fontSize').value;
   const searchText = document.getElementById('searchText').checked;
   const partialSearch = document.getElementById('partialSearch').checked;
+  const specialCases = document.getElementById('specialCases').checked;
 
   if (!searchUrl) {
     showMessage('Please enter a URL or text to search', 'error');
@@ -56,7 +57,8 @@ async function handleSearch() {
         bgColor,
         fontSize,
         searchText,
-        partialSearch
+        partialSearch,
+        specialCases
       }
     });
 
