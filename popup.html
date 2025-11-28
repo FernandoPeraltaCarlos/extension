@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link Finder Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab-button active" data-tab="tab1">Link Finder</button>
+      <button class="tab-button" data-tab="tab2">Function 2</button>
+      <button class="tab-button" data-tab="tab3">Function 3</button>
+      <button class="tab-button" data-tab="tab4">Function 4</button>
+      <button class="tab-button" data-tab="tab5">Function 5</button>
+      <button class="tab-button" data-tab="tab6">Function 6</button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Tab 1: Link Finder -->
+      <div id="tab1" class="tab-panel active">
+        <h2>Link Finder</h2>
+
+        <div class="form-group">
+          <label for="searchUrl">URL to search:</label>
+          <input type="text" id="searchUrl" placeholder="Enter URL or text...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bgColor">Background:</label>
+            <input type="color" id="bgColor" value="#FF0000">
+          </div>
+
+          <div class="form-group">
+            <label for="fontSize">Font size (px):</label>
+            <input type="number" id="fontSize" value="16" min="8" max="72">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="searchText">
+            Search in visible text
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="partialSearch" checked>
+            Partial search
+          </label>
+        </div>
+
+        <div class="button-group">
+          <button id="searchBtn" class="btn btn-primary">Search</button>
+          <button id="clearBtn" class="btn btn-secondary">Clear</button>
+        </div>
+
+        <div id="resultMessage" class="result-message"></div>
+      </div>
+
+      <!-- Tab 2: Placeholder -->
+      <div id="tab2" class="tab-panel">
+        <h2>Function 2</h2>
+        <p>Coming soon...</p>
+      </div>
+
+      <!-- Tab 3: Placeholder -->
+      <div id="tab3" class="tab-panel">
+        <h2>Function 3</h2>
+        <p>Coming soon...</p>
+      </div>
+
+      <!-- Tab 4: Placeholder -->
+      <div id="tab4" class="tab-panel">
+        <h2>Function 4</h2>
+        <p>Coming soon...</p>
+      </div>
+
+      <!-- Tab 5: Placeholder -->
+      <div id="tab5" class="tab-panel">
+        <h2>Function 5</h2>
+        <p>Coming soon...</p>
+      </div>
+
+      <!-- Tab 6: Placeholder -->
+      <div id="tab6" class="tab-panel">
+        <h2>Function 6</h2>
+        <p>Coming soon...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
