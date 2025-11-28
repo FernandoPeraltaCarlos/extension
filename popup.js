@@ -1,5 +1,18 @@
+// Default settings
+const DEFAULT_SETTINGS = {
+  searchUrl: '',
+  searchText: false,
+  partialSearch: false,
+  specialCases: false,
+  bgColor: '#FF0000',
+  fontSize: '12'
+};
+
+// Flag to prevent saving during initial load
+let isLoading = false;
+
 // Tab switching functionality
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanels = document.querySelectorAll('.tab-panel');
 
@@ -17,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Load saved settings on popup open - WAIT for it to complete
+  await loadSettings();
+
   // Link Finder functionality
   const searchBtn = document.getElementById('searchBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -24,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   searchBtn.addEventListener('click', handleSearch);
   clearBtn.addEventListener('click', handleClear);
+
+  // Add change listeners to save settings automatically - AFTER loading
+  setupAutoSave();
 });
 
 async function handleSearch() {
@@ -101,4 +120,74 @@ function showMessage(message, type) {
   setTimeout(() => {
     resultMessage.classList.remove('show');
   }, 3000);
+}
+
+// Load settings from storage
+async function loadSettings() {
+  isLoading = true;
+  console.log('🔵 [LOAD] Starting to load settings...');
+
+  try {
+    const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
+    console.log('🔵 [LOAD] Settings retrieved from storage:', settings);
+
+    // Apply loaded settings to UI
+    document.getElementById('searchUrl').value = settings.searchUrl;
+    document.getElementById('searchText').checked = settings.searchText;
+    document.getElementById('partialSearch').checked = settings.partialSearch;
+    document.getElementById('specialCases').checked = settings.specialCases;
+    document.getElementById('bgColor').value = settings.bgColor;
+    document.getElementById('fontSize').value = settings.fontSize;
+
+    console.log('🔵 [LOAD] Settings applied to UI successfully');
+  } catch (error) {
+    console.error('🔴 [LOAD] Error loading settings:', error);
+  } finally {
+    isLoading = false;
+    console.log('🔵 [LOAD] Loading complete, auto-save enabled');
+  }
+}
+
+// Save settings to storage
+async function saveSettings() {
+  // Prevent saving while loading initial values
+  if (isLoading) {
+    console.log('⏸️  [SAVE] Blocked - currently loading settings');
+    return;
+  }
+
+  try {
+    const settings = {
+      searchUrl: document.getElementById('searchUrl').value,
+      searchText: document.getElementById('searchText').checked,
+      partialSearch: document.getElementById('partialSearch').checked,
+      specialCases: document.getElementById('specialCases').checked,
+      bgColor: document.getElementById('bgColor').value,
+      fontSize: document.getElementById('fontSize').value
+    };
+
+    console.log('🟢 [SAVE] Saving settings:', settings);
+    await chrome.storage.local.set(settings);
+    console.log('🟢 [SAVE] Settings saved successfully');
+  } catch (error) {
+    console.error('🔴 [SAVE] Error saving settings:', error);
+  }
+}
+
+// Setup auto-save on input changes
+function setupAutoSave() {
+  const searchUrl = document.getElementById('searchUrl');
+  const searchText = document.getElementById('searchText');
+  const partialSearch = document.getElementById('partialSearch');
+  const specialCases = document.getElementById('specialCases');
+  const bgColor = document.getElementById('bgColor');
+  const fontSize = document.getElementById('fontSize');
+
+  // Save on input change
+  searchUrl.addEventListener('input', saveSettings);
+  searchText.addEventListener('change', saveSettings);
+  partialSearch.addEventListener('change', saveSettings);
+  specialCases.addEventListener('change', saveSettings);
+  bgColor.addEventListener('change', saveSettings);
+  fontSize.addEventListener('input', saveSettings);
 }

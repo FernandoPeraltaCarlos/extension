@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "author": "Fernando Peralta",
     "description": "Search and highlight links on web pages with custom styling",
-    "permissions": ["activeTab", "scripting"],
+    "permissions": ["activeTab", "scripting", "storage"],
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
