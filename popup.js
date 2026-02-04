@@ -184,26 +184,26 @@ function setupTextCleaner() {
   cleanerBtn.addEventListener('click', () => {
     updateOutput();
     if (!cleanerOutput.value) {
-      showCleanerMessage('Escribe un texto para convertir', 'error');
+      showCleanerMessage('Type some text to convert', 'error');
       return;
     }
-    showCleanerMessage('Texto convertido', 'success');
+    showCleanerMessage('Text converted', 'success');
   });
 
   cleanerInput.addEventListener('input', updateOutput);
 
   cleanerCopyBtn.addEventListener('click', async () => {
     if (!cleanerOutput.value) {
-      showCleanerMessage('No hay nada para copiar', 'error');
+      showCleanerMessage('Nothing to copy', 'error');
       return;
     }
 
     try {
       await navigator.clipboard.writeText(cleanerOutput.value);
-      showCleanerMessage('Copiado al portapapeles', 'success');
+      showCleanerMessage('Copied to clipboard', 'success');
     } catch (error) {
       console.error('Error copying text:', error);
-      showCleanerMessage('Error al copiar', 'error');
+      showCleanerMessage('Copy failed', 'error');
     }
   });
 
@@ -211,7 +211,7 @@ function setupTextCleaner() {
     cleanerInput.value = '';
     cleanerOutput.value = '';
     await saveSettings();
-    showCleanerMessage('Texto limpiado', 'success');
+    showCleanerMessage('Text cleared', 'success');
   });
 }
 

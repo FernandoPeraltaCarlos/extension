@@ -1,149 +1,146 @@
 # Link Finder Extension
 
-Chrome/Edge extension para buscar y resaltar enlaces en páginas web con estilos personalizados.
+Chrome/Edge extension to search and highlight links on web pages with custom styling, plus a text cleaner tool.
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 extension/
-├── manifest.json          # Configuración de la extensión (Manifest V3)
-├── popup.html            # Interfaz del popup con sistema de tabs
-├── popup.css             # Estilos minimalistas blanco/negro
-├── popup.js              # Lógica de la UI y comunicación
-├── content.js            # Script de inyección y highlighting
-├── create-icons.html     # Generador de iconos
+├── manifest.json          # Extension configuration (Manifest V3)
+├── popup.html             # Popup UI with tab system
+├── popup.css              # Minimal black/white styles
+├── popup.js               # UI logic and communication
+├── content.js             # Injection script and highlighting
+├── create-icons.html      # Icon generator
 ├── icons/
-│   ├── README.md         # Instrucciones para iconos
-│   └── icon.svg          # Template SVG
-└── README.md             # Este archivo
+│   ├── README.md          # Icon instructions
+│   └── icon.svg           # SVG template
+└── README.md              # This file
 ```
 
-## Instalación
+## Installation
 
-### Paso 1: Generar Iconos
+### Step 1: Generate Icons
 
-1. Abre `create-icons.html` en tu navegador
-2. Haz clic en los 3 botones "Download" para descargar:
+1. Open `create-icons.html` in your browser
+2. Click the three "Download" buttons to download:
    - icon-16.png
    - icon-48.png
    - icon-128.png
-3. Guarda los archivos en la carpeta `icons/`
+3. Save the files into the `icons/` folder
 
-### Paso 2: Cargar en Chrome/Edge
+### Step 2: Load in Chrome/Edge
 
 **Chrome:**
-1. Abre `chrome://extensions/`
-2. Activa "Modo de desarrollador" (esquina superior derecha)
-3. Haz clic en "Cargar extensión sin empaquetar"
-4. Selecciona la carpeta `extension/`
+1. Open `chrome://extensions/`
+2. Enable Developer Mode (top right)
+3. Click "Load unpacked"
+4. Select the `extension/` folder
 
 **Edge:**
-1. Abre `edge://extensions/`
-2. Activa "Modo de desarrollador" (panel izquierdo)
-3. Haz clic en "Cargar extensión descomprimida"
-4. Selecciona la carpeta `extension/`
+1. Open `edge://extensions/`
+2. Enable Developer Mode (left panel)
+3. Click "Load unpacked"
+4. Select the `extension/` folder
 
-## Uso
+## Usage
 
-### Buscador de Enlaces (Tab 1)
+### Link Finder (Tab 1)
 
-1. Haz clic en el icono de la extensión en la barra de herramientas
-2. En el tab "Link Finder":
-   - **URL to search**: Ingresa la URL o texto a buscar
-   - **Background**: Selecciona color de fondo (default: rojo #FF0000)
-   - **Font size**: Tamaño de fuente en píxeles (default: 16px)
-   - **Search in visible text**: Busca también en texto visible (no solo en href)
-   - **Partial search**: Búsqueda parcial (default: activado)
-3. Haz clic en "Search" para aplicar highlights
-4. Haz clic en "Clear" para limpiar todos los highlights
+1. Click the extension icon in the toolbar
+2. In the "Link Finder" tab:
+   - **URL to search**: Enter the URL or text to search
+   - **Background**: Pick highlight background color (default: red #FF0000)
+   - **Font size**: Font size in pixels (default: 12px)
+   - **Search in visible text**: Also search visible text (not only href)
+   - **Partial search**: Partial match (default: enabled)
+3. Click "Search" to apply highlights
+4. Click "Clear" to remove highlights
 
-### Ejemplos de Búsqueda
+### Text Cleaner (Tab 2)
 
-**Búsqueda básica:**
-- Input: `google.com`
-- Encontrará: `<a href="https://google.com">`, `<a href="https://www.google.com/maps">`
+1. Type your text in the input field
+2. Click "Convert" (or type to see live output)
+3. Click "Copy" to copy the result
+4. Click "Clear" to reset the fields
 
-**Búsqueda exacta:**
-- Desactiva "Partial search"
-- Input: `https://google.com`
-- Encontrará solo coincidencias exactas
+**Example**
+- Input: `hola como estas`
+- Output: `hola-como-estas`
 
-**Búsqueda en texto visible:**
-- Activa "Search in visible text"
-- Input: `example.com`
-- Encontrará enlaces Y texto que muestre "example.com"
+## Future Features
 
-## Funcionalidades Futuras
+Tabs 3-6 are reserved for new tools:
+- Function 3: TBD
+- Function 4: TBD
+- Function 5: TBD
+- Function 6: TBD
 
-Los tabs 2-6 están preparados para nuevas funciones:
-- Function 2: Por definir
-- Function 3: Por definir
-- Function 4: Por definir
-- Function 5: Por definir
-- Function 6: Por definir
+The architecture is designed to be easily expandable.
 
-La arquitectura está diseñada para ser fácilmente escalable.
+## Technologies
 
-## Tecnologías
+- **Manifest Version**: V3 (Chrome/Edge compatible)
+- **Languages**: Vanilla JavaScript, HTML5, CSS3
+- **No external dependencies**
 
-- **Manifest Version**: V3 (compatible con Chrome y Edge)
-- **Lenguajes**: JavaScript vanilla, HTML5, CSS3
-- **Sin dependencias externas**: No requiere librerías adicionales
+## Technical Features
 
-## Características Técnicas
+- Compatible with Chrome and Edge (Chromium)
+- Manifest V3
+- Local persistence for popup settings
+- Minimal black/white design
+- Scalable tab system
+- Partial and exact search
+- Search in href and visible text
+- Custom highlight color and font size
+- Highlight cleanup
+- Text cleaner with slug-style output
+- Remembers last active tab
 
-- ✅ Compatible con Chrome y Edge (Chromium)
-- ✅ Manifest V3
-- ✅ Sin persistencia de datos
-- ✅ Diseño minimalista (blanco/negro)
-- ✅ Sistema de tabs escalable
-- ✅ Búsqueda parcial y exacta
-- ✅ Búsqueda en href y texto visible
-- ✅ Personalización de color y tamaño
-- ✅ Limpieza de highlights
+## Development Notes
 
-## Notas de Desarrollo
+### Permissions Used
+- `activeTab`: Access to current tab
+- `scripting`: Inject content script
+- `storage`: Persist popup settings
 
-### Permisos Utilizados
-- `activeTab`: Acceso a la pestaña activa
-- `scripting`: Inyección de content script
+### Communication
+- Popup -> Content Script: `chrome.tabs.sendMessage()`
+- Content Script -> Popup: Response callbacks
 
-### Comunicación
-- Popup → Content Script: `chrome.tabs.sendMessage()`
-- Content Script → Popup: Response callbacks
-
-### Estilos Aplicados
-Los highlights se aplican mediante estilos inline:
-- `background-color`: Color seleccionado
-- `font-size`: Tamaño en píxeles
+### Applied Styles
+Highlights use inline styles:
+- `background-color`: Selected color
+- `font-size`: Size in pixels
 
 ## Troubleshooting
 
-**La extensión no aparece:**
-- Verifica que los iconos estén en `icons/`
-- Recarga la extensión en `chrome://extensions/`
+**The extension does not appear:**
+- Check that icons exist in `icons/`
+- Reload the extension in `chrome://extensions/`
 
-**No encuentra enlaces:**
-- Verifica que la URL sea correcta
-- Intenta activar "Partial search"
-- Verifica que la página tenga enlaces con esa URL
+**No links found:**
+- Verify the URL is correct
+- Try enabling "Partial search"
+- Check that the page contains links with that URL
 
-**Los highlights no se aplican:**
-- Verifica la consola del navegador (F12)
-- Recarga la página web
-- Intenta reiniciar la extensión
+**Highlights not applied:**
+- Check the browser console (F12)
+- Reload the web page
+- Try restarting the extension
 
-## Próximos Pasos
+## Next Steps
 
-1. ✅ Estructura base creada
-2. ✅ Funcionalidad de buscador de enlaces implementada
-3. 🔲 Agregar función 2
-4. 🔲 Agregar función 3
-5. 🔲 Agregar función 4
-6. 🔲 Agregar función 5
-7. 🔲 Agregar función 6
+1. Base structure complete
+2. Link Finder implemented
+3. Text Cleaner implemented
+4. Add Function 3
+5. Add Function 4
+6. Add Function 5
+7. Add Function 6
 
 ---
 
-**Versión**: 1.0.0
-**Fecha**: 2025-11-27
+**Version**: 1.0.0
+**Date**: 2025-11-27
