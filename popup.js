@@ -6,7 +6,8 @@ const DEFAULT_SETTINGS = {
   specialCases: false,
   bgColor: '#FF0000',
   fontSize: '12',
-  cleanerInput: ''
+  cleanerInput: '',
+  activeTab: 'tab1'
 };
 
 // Flag to prevent saving during initial load
@@ -28,6 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Add active class to clicked button and corresponding panel
       button.classList.add('active');
       document.getElementById(targetTab).classList.add('active');
+
+      saveActiveTab(targetTab);
     });
   });
 
@@ -124,6 +127,18 @@ function showMessage(message, type) {
   setTimeout(() => {
     resultMessage.classList.remove('show');
   }, 3000);
+}
+
+async function saveActiveTab(tabId) {
+  if (isLoading) {
+    return;
+  }
+
+  try {
+    await chrome.storage.local.set({ activeTab: tabId });
+  } catch (error) {
+    console.error('🔴 [SAVE] Error saving active tab:', error);
+  }
 }
 
 function showCleanerMessage(message, type) {
@@ -224,6 +239,16 @@ async function loadSettings() {
         ? cleanTextToSlug(settings.cleanerInput)
         : '';
     }
+
+    const activeTab = settings.activeTab || 'tab1';
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    tabButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === activeTab);
+    });
+    tabPanels.forEach(panel => {
+      panel.classList.toggle('active', panel.id === activeTab);
+    });
 
     console.log('🔵 [LOAD] Settings applied to UI successfully');
   } catch (error) {
