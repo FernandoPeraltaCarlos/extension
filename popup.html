@@ -11,7 +11,7 @@
     <!-- Tab Navigation -->
     <div class="tabs">
       <button class="tab-button active" data-tab="tab1">Link Finder</button>
-      <button class="tab-button" data-tab="tab2">Function 2</button>
+      <button class="tab-button" data-tab="tab2">Text Cleaner</button>
       <button class="tab-button" data-tab="tab3">Function 3</button>
       <button class="tab-button" data-tab="tab4">Function 4</button>
       <button class="tab-button" data-tab="tab5">Function 5</button>
@@ -70,10 +70,27 @@
         <div id="resultMessage" class="result-message"></div>
       </div>
 
-      <!-- Tab 2: Placeholder -->
+      <!-- Tab 2: Text Cleaner -->
       <div id="tab2" class="tab-panel">
-        <h2>Function 2</h2>
-        <p>Coming soon...</p>
+        <h2>Text Cleaner</h2>
+
+        <div class="form-group">
+          <label for="cleanerInput">Texto:</label>
+          <textarea id="cleanerInput" rows="4" placeholder="Escribe tu texto..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cleanerOutput">Resultado:</label>
+          <input type="text" id="cleanerOutput" readonly>
+        </div>
+
+        <div class="button-group">
+          <button id="cleanerBtn" class="btn btn-primary">Convertir</button>
+          <button id="cleanerCopyBtn" class="btn btn-secondary">Copiar</button>
+          <button id="cleanerClearBtn" class="btn btn-secondary">Limpiar</button>
+        </div>
+
+        <div id="cleanerMessage" class="result-message"></div>
       </div>
 
       <!-- Tab 3: Placeholder -->

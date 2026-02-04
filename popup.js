@@ -5,7 +5,8 @@ const DEFAULT_SETTINGS = {
   partialSearch: false,
   specialCases: false,
   bgColor: '#FF0000',
-  fontSize: '12'
+  fontSize: '12',
+  cleanerInput: ''
 };
 
 // Flag to prevent saving during initial load
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   searchBtn.addEventListener('click', handleSearch);
   clearBtn.addEventListener('click', handleClear);
+
+  // Text Cleaner functionality
+  setupTextCleaner();
 
   // Add change listeners to save settings automatically - AFTER loading
   setupAutoSave();
@@ -122,6 +126,80 @@ function showMessage(message, type) {
   }, 3000);
 }
 
+function showCleanerMessage(message, type) {
+  const cleanerMessage = document.getElementById('cleanerMessage');
+  if (!cleanerMessage) {
+    return;
+  }
+
+  cleanerMessage.textContent = message;
+  cleanerMessage.className = `result-message show ${type}`;
+
+  setTimeout(() => {
+    cleanerMessage.classList.remove('show');
+  }, 2500);
+}
+
+function cleanTextToSlug(value) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
+function setupTextCleaner() {
+  const cleanerInput = document.getElementById('cleanerInput');
+  const cleanerOutput = document.getElementById('cleanerOutput');
+  const cleanerBtn = document.getElementById('cleanerBtn');
+  const cleanerCopyBtn = document.getElementById('cleanerCopyBtn');
+  const cleanerClearBtn = document.getElementById('cleanerClearBtn');
+
+  if (!cleanerInput || !cleanerOutput || !cleanerBtn || !cleanerCopyBtn || !cleanerClearBtn) {
+    return;
+  }
+
+  const updateOutput = () => {
+    const rawValue = cleanerInput.value.trim();
+    cleanerOutput.value = rawValue ? cleanTextToSlug(rawValue) : '';
+  };
+
+  cleanerBtn.addEventListener('click', () => {
+    updateOutput();
+    if (!cleanerOutput.value) {
+      showCleanerMessage('Escribe un texto para convertir', 'error');
+      return;
+    }
+    showCleanerMessage('Texto convertido', 'success');
+  });
+
+  cleanerInput.addEventListener('input', updateOutput);
+
+  cleanerCopyBtn.addEventListener('click', async () => {
+    if (!cleanerOutput.value) {
+      showCleanerMessage('No hay nada para copiar', 'error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(cleanerOutput.value);
+      showCleanerMessage('Copiado al portapapeles', 'success');
+    } catch (error) {
+      console.error('Error copying text:', error);
+      showCleanerMessage('Error al copiar', 'error');
+    }
+  });
+
+  cleanerClearBtn.addEventListener('click', async () => {
+    cleanerInput.value = '';
+    cleanerOutput.value = '';
+    await saveSettings();
+    showCleanerMessage('Texto limpiado', 'success');
+  });
+}
+
 // Load settings from storage
 async function loadSettings() {
   isLoading = true;
@@ -138,6 +216,14 @@ async function loadSettings() {
     document.getElementById('specialCases').checked = settings.specialCases;
     document.getElementById('bgColor').value = settings.bgColor;
     document.getElementById('fontSize').value = settings.fontSize;
+    const cleanerInput = document.getElementById('cleanerInput');
+    const cleanerOutput = document.getElementById('cleanerOutput');
+    if (cleanerInput && cleanerOutput) {
+      cleanerInput.value = settings.cleanerInput || '';
+      cleanerOutput.value = settings.cleanerInput
+        ? cleanTextToSlug(settings.cleanerInput)
+        : '';
+    }
 
     console.log('🔵 [LOAD] Settings applied to UI successfully');
   } catch (error) {
@@ -163,7 +249,8 @@ async function saveSettings() {
       partialSearch: document.getElementById('partialSearch').checked,
       specialCases: document.getElementById('specialCases').checked,
       bgColor: document.getElementById('bgColor').value,
-      fontSize: document.getElementById('fontSize').value
+      fontSize: document.getElementById('fontSize').value,
+      cleanerInput: document.getElementById('cleanerInput')?.value || ''
     };
 
     console.log('🟢 [SAVE] Saving settings:', settings);
@@ -182,6 +269,7 @@ function setupAutoSave() {
   const specialCases = document.getElementById('specialCases');
   const bgColor = document.getElementById('bgColor');
   const fontSize = document.getElementById('fontSize');
+  const cleanerInput = document.getElementById('cleanerInput');
 
   // Save on input change
   searchUrl.addEventListener('input', saveSettings);
@@ -190,4 +278,7 @@ function setupAutoSave() {
   specialCases.addEventListener('change', saveSettings);
   bgColor.addEventListener('change', saveSettings);
   fontSize.addEventListener('input', saveSettings);
+  if (cleanerInput) {
+    cleanerInput.addEventListener('input', saveSettings);
+  }
 }
