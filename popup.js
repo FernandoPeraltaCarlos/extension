@@ -73,8 +73,6 @@ async function handleSearch() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-    await ensureContentScript(tab.id);
-
     // Send message to content script
     const response = await chrome.tabs.sendMessage(tab.id, {
       action: 'search',
@@ -323,17 +321,6 @@ function setupAutoSave() {
 const DS_COLORS = ['red', 'blue', 'gray', 'green', 'brown', 'yellow', 'pink'];
 const DS_DEFAULT_SIZE = 14;
 
-async function ensureContentScript(tabId) {
-  try {
-    await chrome.tabs.sendMessage(tabId, { action: 'ping' });
-  } catch (err) {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content.js']
-    });
-  }
-}
-
 function setupDocSearch() {
   const scanBtn = document.getElementById('dsScanBtn');
   const applyBtn = document.getElementById('dsApplyBtn');
@@ -372,7 +359,6 @@ async function handleDsScan() {
   setDsLoading(true, 'Scanning...');
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await ensureContentScript(tab.id);
     const response = await chrome.tabs.sendMessage(tab.id, {
       action: 'docSearch:scan',
       selector: attachSelector
@@ -455,7 +441,6 @@ async function handleDsApply() {
   setDsLoading(true, 'Searching for matches...');
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await ensureContentScript(tab.id);
     const response = await chrome.tabs.sendMessage(tab.id, {
       action: 'docSearch:apply',
       attachSelector,
