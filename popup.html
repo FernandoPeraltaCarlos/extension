@@ -113,7 +113,16 @@
           <button id="dsClearBtn" class="btn btn-secondary">Clear</button>
         </div>
 
-        <div id="dsItemList" class="ds-item-list"></div>
+        <div class="ds-list-panel">
+          <div class="ds-list-header">
+            <span id="dsItemCount" class="ds-item-count">Total: 0</span>
+          </div>
+          <div id="dsListLoading" class="ds-list-loading" hidden>
+            <span class="ds-spinner"></span>
+            <span id="dsLoadingText" class="ds-loading-text"></span>
+          </div>
+          <div id="dsItemList" class="ds-item-list"></div>
+        </div>
         <div id="dsMessage" class="result-message"></div>
       </div>
 

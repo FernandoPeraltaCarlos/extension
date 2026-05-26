@@ -345,8 +345,31 @@ function setupDocSearch() {
   clearBtn.addEventListener('click', handleDsClear);
 }
 
+function updateDsItemCount(n) {
+  const el = document.getElementById('dsItemCount');
+  if (el) el.textContent = `Total: ${n}`;
+}
+
+function setDsLoading(isLoading, message = '') {
+  const loading = document.getElementById('dsListLoading');
+  const list = document.getElementById('dsItemList');
+  const loadingText = document.getElementById('dsLoadingText');
+  const scanBtn = document.getElementById('dsScanBtn');
+  const applyBtn = document.getElementById('dsApplyBtn');
+  const clearBtn = document.getElementById('dsClearBtn');
+  const hasItems = !!document.querySelector('#dsItemList .ds-item-row');
+
+  if (loading) loading.hidden = !isLoading;
+  if (loadingText) loadingText.textContent = message;
+  if (list) list.classList.toggle('is-hidden', isLoading);
+  if (scanBtn) scanBtn.disabled = isLoading;
+  if (applyBtn) applyBtn.disabled = isLoading || !hasItems;
+  if (clearBtn) clearBtn.disabled = isLoading;
+}
+
 async function handleDsScan() {
   const attachSelector = document.getElementById('dsAttachSelector').value.trim() || 'aside a';
+  setDsLoading(true, 'Scanning...');
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await ensureContentScript(tab.id);
@@ -366,12 +389,15 @@ async function handleDsScan() {
       showDsMessage(`Found ${response.items.length} element(s)`, 'success');
     } else {
       itemList.replaceChildren();
+      updateDsItemCount(0);
       applyBtn.disabled = true;
       showDsMessage('No elements matched the selector', 'info');
     }
   } catch (err) {
     console.error(err);
     showDsMessage('Error scanning the page', 'error');
+  } finally {
+    setDsLoading(false);
   }
 }
 
@@ -401,6 +427,7 @@ function renderDsItemList(items) {
     row.append(label, colorInput, sizeInput);
     list.appendChild(row);
   });
+  updateDsItemCount(items.length);
 }
 
 function colorNameToHex(name) {
@@ -425,6 +452,7 @@ async function handleDsApply() {
     fontSize: row.querySelector('input[type="number"]').value
   }));
 
+  setDsLoading(true, 'Searching for matches...');
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await ensureContentScript(tab.id);
@@ -447,6 +475,8 @@ async function handleDsApply() {
   } catch (err) {
     console.error(err);
     showDsMessage('Error applying highlights', 'error');
+  } finally {
+    setDsLoading(false);
   }
 }
 

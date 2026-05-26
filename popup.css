@@ -245,10 +245,61 @@ body {
   border: 1px solid #90caf9;
 }
 
-.ds-item-list {
+.ds-list-panel {
   margin-top: 10px;
+}
+
+.ds-list-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.ds-item-count {
+  font-size: 12px;
+  color: #666666;
+  font-weight: 600;
+}
+
+.ds-list-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.ds-list-loading[hidden] {
+  display: none;
+}
+
+.ds-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation: dsSpin 0.8s linear infinite;
+}
+
+@keyframes dsSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ds-loading-text {
+  font-size: 13px;
+  color: #666666;
+}
+
+.ds-item-list {
   max-height: 200px;
   overflow-y: auto;
+}
+
+.ds-item-list.is-hidden {
+  display: none;
 }
 
 .ds-item-row {
