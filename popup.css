@@ -244,3 +244,37 @@ body {
   color: #1565c0;
   border: 1px solid #90caf9;
 }
+
+.ds-item-list {
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ds-item-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+}
+
+.ds-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-item-row input[type="color"] {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.ds-item-row input[type="number"] {
+  width: 48px;
+}

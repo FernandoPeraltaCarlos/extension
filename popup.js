@@ -7,6 +7,8 @@ const DEFAULT_SETTINGS = {
   bgColor: '#FF0000',
   fontSize: '12',
   cleanerInput: '',
+  dsAttachSelector: 'aside a',
+  dsLinksSelector: 'a',
   activeTab: 'tab1'
 };
 
@@ -48,6 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Text Cleaner functionality
   setupTextCleaner();
 
+  // Doc Search functionality
+  setupDocSearch();
+
   // Add change listeners to save settings automatically - AFTER loading
   setupAutoSave();
 });
@@ -66,14 +71,9 @@ async function handleSearch() {
   }
 
   try {
-    // Get active tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-    // Inject content script
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
+    await ensureContentScript(tab.id);
 
     // Send message to content script
     const response = await chrome.tabs.sendMessage(tab.id, {
@@ -240,6 +240,11 @@ async function loadSettings() {
         : '';
     }
 
+    const dsAttachSelector = document.getElementById('dsAttachSelector');
+    const dsLinksSelector = document.getElementById('dsLinksSelector');
+    if (dsAttachSelector) dsAttachSelector.value = settings.dsAttachSelector;
+    if (dsLinksSelector) dsLinksSelector.value = settings.dsLinksSelector;
+
     const activeTab = settings.activeTab || 'tab1';
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabPanels = document.querySelectorAll('.tab-panel');
@@ -275,7 +280,9 @@ async function saveSettings() {
       specialCases: document.getElementById('specialCases').checked,
       bgColor: document.getElementById('bgColor').value,
       fontSize: document.getElementById('fontSize').value,
-      cleanerInput: document.getElementById('cleanerInput')?.value || ''
+      cleanerInput: document.getElementById('cleanerInput')?.value || '',
+      dsAttachSelector: document.getElementById('dsAttachSelector')?.value || 'aside a',
+      dsLinksSelector: document.getElementById('dsLinksSelector')?.value || 'a'
     };
 
     console.log('🟢 [SAVE] Saving settings:', settings);
@@ -306,4 +313,157 @@ function setupAutoSave() {
   if (cleanerInput) {
     cleanerInput.addEventListener('input', saveSettings);
   }
+
+  const dsAttachSelector = document.getElementById('dsAttachSelector');
+  const dsLinksSelector = document.getElementById('dsLinksSelector');
+  if (dsAttachSelector) dsAttachSelector.addEventListener('input', saveSettings);
+  if (dsLinksSelector) dsLinksSelector.addEventListener('input', saveSettings);
+}
+
+const DS_COLORS = ['red', 'blue', 'gray', 'green', 'brown', 'yellow', 'pink'];
+const DS_DEFAULT_SIZE = 14;
+
+async function ensureContentScript(tabId) {
+  try {
+    await chrome.tabs.sendMessage(tabId, { action: 'ping' });
+  } catch (err) {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['content.js']
+    });
+  }
+}
+
+function setupDocSearch() {
+  const scanBtn = document.getElementById('dsScanBtn');
+  const applyBtn = document.getElementById('dsApplyBtn');
+  const clearBtn = document.getElementById('dsClearBtn');
+  if (!scanBtn || !applyBtn || !clearBtn) return;
+
+  scanBtn.addEventListener('click', handleDsScan);
+  applyBtn.addEventListener('click', handleDsApply);
+  clearBtn.addEventListener('click', handleDsClear);
+}
+
+async function handleDsScan() {
+  const attachSelector = document.getElementById('dsAttachSelector').value.trim() || 'aside a';
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await ensureContentScript(tab.id);
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      action: 'docSearch:scan',
+      selector: attachSelector
+    });
+    if (response?.error) {
+      showDsMessage(response.error, 'error');
+      return;
+    }
+    const itemList = document.getElementById('dsItemList');
+    const applyBtn = document.getElementById('dsApplyBtn');
+    if (response?.items?.length) {
+      renderDsItemList(response.items);
+      applyBtn.disabled = false;
+      showDsMessage(`Found ${response.items.length} element(s)`, 'success');
+    } else {
+      itemList.replaceChildren();
+      applyBtn.disabled = true;
+      showDsMessage('No elements matched the selector', 'info');
+    }
+  } catch (err) {
+    console.error(err);
+    showDsMessage('Error scanning the page', 'error');
+  }
+}
+
+function renderDsItemList(items) {
+  const list = document.getElementById('dsItemList');
+  list.replaceChildren();
+  items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'ds-item-row';
+    row.dataset.index = i;
+
+    const label = document.createElement('span');
+    label.className = 'ds-item-label';
+    label.textContent = item.text || item.href || `Item ${i + 1}`;
+    label.title = item.href;
+
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = colorNameToHex(DS_COLORS[i % DS_COLORS.length]);
+
+    const sizeInput = document.createElement('input');
+    sizeInput.type = 'number';
+    sizeInput.value = DS_DEFAULT_SIZE;
+    sizeInput.min = 8;
+    sizeInput.max = 72;
+
+    row.append(label, colorInput, sizeInput);
+    list.appendChild(row);
+  });
+}
+
+function colorNameToHex(name) {
+  const map = {
+    red: '#FF0000',
+    blue: '#0000FF',
+    gray: '#808080',
+    green: '#008000',
+    brown: '#A52A2A',
+    yellow: '#FFFF00',
+    pink: '#FFC0CB'
+  };
+  return map[name] || '#FF0000';
+}
+
+async function handleDsApply() {
+  const attachSelector = document.getElementById('dsAttachSelector').value.trim() || 'aside a';
+  const linksSelector = document.getElementById('dsLinksSelector').value.trim() || 'a';
+  const rows = document.querySelectorAll('#dsItemList .ds-item-row');
+  const itemConfigs = Array.from(rows).map(row => ({
+    color: row.querySelector('input[type="color"]').value,
+    fontSize: row.querySelector('input[type="number"]').value
+  }));
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await ensureContentScript(tab.id);
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      action: 'docSearch:apply',
+      attachSelector,
+      linksSelector,
+      itemConfigs
+    });
+    if (response?.error) {
+      showDsMessage(response.error, 'error');
+      return;
+    }
+    if (response?.count !== undefined) {
+      showDsMessage(
+        response.count > 0 ? `Highlighted ${response.count} match(es)` : 'No matches found',
+        response.count > 0 ? 'success' : 'info'
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    showDsMessage('Error applying highlights', 'error');
+  }
+}
+
+async function handleDsClear() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const response = await chrome.tabs.sendMessage(tab.id, { action: 'docSearch:clear' });
+    if (response?.success) showDsMessage('Highlights cleared', 'success');
+  } catch (err) {
+    showDsMessage('Nothing to clear', 'info');
+  }
+}
+
+function showDsMessage(message, type) {
+  const el = document.getElementById('dsMessage');
+  if (!el) return;
+  el.textContent = message;
+  el.className = `result-message show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 3000);
 }

@@ -1,5 +1,6 @@
 // Store highlighted elements for cleanup
 let highlightedElements = [];
+let dsHighlightedElements = [];
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -8,6 +9,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ count });
   } else if (request.action === 'clear') {
     clearHighlights();
+    sendResponse({ success: true });
+  } else if (request.action === 'ping') {
+    sendResponse({ success: true });
+  } else if (request.action === 'docSearch:scan') {
+    try {
+      const elements = Array.from(document.querySelectorAll(request.selector || 'aside a'));
+      const items = elements.map(el => ({
+        href: el.href || '',
+        text: (el.textContent || '').trim().slice(0, 80)
+      }));
+      sendResponse({ items });
+    } catch (err) {
+      sendResponse({ error: 'Invalid reference selector' });
+    }
+  } else if (request.action === 'docSearch:apply') {
+    const result = dsApplyHighlights(request.attachSelector, request.linksSelector, request.itemConfigs);
+    sendResponse(result);
+  } else if (request.action === 'docSearch:clear') {
+    dsClearHighlights();
     sendResponse({ success: true });
   }
   return true;
@@ -132,6 +152,61 @@ function getTextNodesContaining(searchText, partialSearch) {
   }
 
   return textNodes;
+}
+
+function dsApplyHighlights(attachSelector, linksSelector, itemConfigs) {
+  dsClearHighlights();
+
+  let attach;
+  let links;
+  try {
+    attach = Array.from(document.querySelectorAll(attachSelector || 'aside a'));
+    links = Array.from(document.querySelectorAll(linksSelector || 'a'));
+  } catch (err) {
+    return { error: 'Invalid selector' };
+  }
+
+  let count = 0;
+  const styledElements = new Set();
+
+  attach.forEach((el, i) => {
+    const cfg = itemConfigs[i] || {};
+    applyDsStyle(el, cfg.color, cfg.fontSize);
+    styledElements.add(el);
+  });
+
+  links.forEach(link => {
+    attach.forEach((el, i) => {
+      if (link.href && link.href === el.href && link !== el && !styledElements.has(link)) {
+        const cfg = itemConfigs[i] || {};
+        applyDsStyle(link, cfg.color, cfg.fontSize);
+        styledElements.add(link);
+        count++;
+      }
+    });
+  });
+
+  return { count };
+}
+
+function applyDsStyle(element, color, fontSize) {
+  dsHighlightedElements.push({
+    element,
+    backgroundColor: element.style.backgroundColor,
+    fontSize: element.style.fontSize
+  });
+  element.style.backgroundColor = color || '#FF0000';
+  element.style.fontSize = (fontSize || 14) + 'px';
+  element.setAttribute('data-ds-highlighted', 'true');
+}
+
+function dsClearHighlights() {
+  dsHighlightedElements.forEach(item => {
+    item.element.style.backgroundColor = item.backgroundColor;
+    item.element.style.fontSize = item.fontSize;
+    item.element.removeAttribute('data-ds-highlighted');
+  });
+  dsHighlightedElements = [];
 }
 
 function clearHighlights() {
