@@ -9,6 +9,9 @@ const DEFAULT_SETTINGS = {
   cleanerInput: '',
   dsAttachSelector: 'aside a',
   dsLinksSelector: 'a',
+  dsScanItems: [],      // Array de { href, text } del último scan
+  dsItemConfigs: [],    // Array de { color, fontSize } por cada item
+  dsScanPageUrl: '',    // URL del tab donde se hizo el último scan
   activeTab: 'tab1'
 };
 
@@ -243,6 +246,37 @@ async function loadSettings() {
     if (dsAttachSelector) dsAttachSelector.value = settings.dsAttachSelector;
     if (dsLinksSelector) dsLinksSelector.value = settings.dsLinksSelector;
 
+    const dsScanItems = Array.isArray(settings.dsScanItems) ? settings.dsScanItems : [];
+    const dsItemConfigs = Array.isArray(settings.dsItemConfigs) ? settings.dsItemConfigs : [];
+    const dsScanPageUrl = settings.dsScanPageUrl || '';
+    const itemList = document.getElementById('dsItemList');
+    const applyBtn = document.getElementById('dsApplyBtn');
+
+    const currentPageUrl = await getCurrentPageUrl();
+    const urlMatches = dsScanPageUrl && dsScanPageUrl === currentPageUrl;
+
+    if (urlMatches && dsScanItems.length) {
+      renderDsItemList(dsScanItems);
+
+      // Restore per-row configs (color/fontSize) after rendering.
+      const rows = document.querySelectorAll('#dsItemList .ds-item-row');
+      rows.forEach((row, i) => {
+        const cfg = dsItemConfigs[i] || {};
+        const colorInput = row.querySelector('input[type="color"]');
+        const sizeInput = row.querySelector('input[type="number"]');
+        if (colorInput && cfg.color) colorInput.value = cfg.color;
+        if (sizeInput && cfg.fontSize !== undefined && cfg.fontSize !== null && cfg.fontSize !== '') {
+          sizeInput.value = String(cfg.fontSize);
+        }
+      });
+
+      if (applyBtn) applyBtn.disabled = false;
+    } else {
+      itemList?.replaceChildren();
+      updateDsItemCount(0);
+      if (applyBtn) applyBtn.disabled = true;
+    }
+
     const activeTab = settings.activeTab || 'tab1';
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabPanels = document.querySelectorAll('.tab-panel');
@@ -259,6 +293,22 @@ async function loadSettings() {
   } finally {
     isLoading = false;
     console.log('🔵 [LOAD] Loading complete, auto-save enabled');
+  }
+}
+
+async function getCurrentPageUrl() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return '';
+
+    const response = await Promise.race([
+      chrome.tabs.sendMessage(tab.id, { action: 'docSearch:getPageUrl' }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))
+    ]);
+
+    return response?.pageUrl || '';
+  } catch (error) {
+    return '';
   }
 }
 
@@ -370,13 +420,34 @@ async function handleDsScan() {
     const itemList = document.getElementById('dsItemList');
     const applyBtn = document.getElementById('dsApplyBtn');
     if (response?.items?.length) {
-      renderDsItemList(response.items);
+      const dsScanItems = response.items.map(item => ({
+        href: item.href || '',
+        text: item.text || ''
+      }));
+
+      renderDsItemList(dsScanItems);
+
+      const dsItemConfigs = dsScanItems.map((_, i) => ({
+        color: colorNameToHex(DS_COLORS[i % DS_COLORS.length]),
+        fontSize: DS_DEFAULT_SIZE
+      }));
+
+      await chrome.storage.local.set({
+        dsScanItems,
+        dsItemConfigs,
+        dsScanPageUrl: response.pageUrl || ''
+      });
       applyBtn.disabled = false;
       showDsMessage(`Found ${response.items.length} element(s)`, 'success');
     } else {
       itemList.replaceChildren();
       updateDsItemCount(0);
       applyBtn.disabled = true;
+      await chrome.storage.local.set({
+        dsScanItems: [],
+        dsItemConfigs: [],
+        dsScanPageUrl: ''
+      });
       showDsMessage('No elements matched the selector', 'info');
     }
   } catch (err) {
@@ -410,10 +481,38 @@ function renderDsItemList(items) {
     sizeInput.min = 8;
     sizeInput.max = 72;
 
+    const persistChangeHandler = () => {
+      saveDsScanState().catch(err => console.error('🔴 [SAVE] dsScanState:', err));
+    };
+
+    colorInput.addEventListener('input', persistChangeHandler);
+    colorInput.addEventListener('change', persistChangeHandler);
+    sizeInput.addEventListener('input', persistChangeHandler);
+    sizeInput.addEventListener('change', persistChangeHandler);
+
     row.append(label, colorInput, sizeInput);
     list.appendChild(row);
   });
   updateDsItemCount(items.length);
+}
+
+async function saveDsScanState() {
+  // Prevent writes while we are restoring initial UI state.
+  if (isLoading) return;
+
+  const rows = document.querySelectorAll('#dsItemList .ds-item-row');
+  const dsItemConfigs = Array.from(rows).map(row => {
+    const colorInput = row.querySelector('input[type="color"]');
+    const sizeInput = row.querySelector('input[type="number"]');
+    const fontSizeValue = sizeInput?.value;
+
+    return {
+      color: colorInput?.value || '#FF0000',
+      fontSize: fontSizeValue !== undefined && fontSizeValue !== '' ? Number(fontSizeValue) : DS_DEFAULT_SIZE
+    };
+  });
+
+  await chrome.storage.local.set({ dsItemConfigs });
 }
 
 function colorNameToHex(name) {

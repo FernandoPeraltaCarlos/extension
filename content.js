@@ -19,10 +19,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         href: el.href || '',
         text: (el.textContent || '').trim().slice(0, 80)
       }));
-      sendResponse({ items });
+      sendResponse({ items, pageUrl: window.location.href });
     } catch (err) {
       sendResponse({ error: 'Invalid reference selector' });
     }
+  } else if (request.action === 'docSearch:getPageUrl') {
+    sendResponse({ pageUrl: window.location.href });
   } else if (request.action === 'docSearch:apply') {
     const result = dsApplyHighlights(request.attachSelector, request.linksSelector, request.itemConfigs);
     sendResponse(result);
