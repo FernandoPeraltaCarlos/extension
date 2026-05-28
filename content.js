@@ -198,7 +198,7 @@ function applyDsStyle(element, color, fontSize) {
     fontSize: element.style.fontSize
   });
   element.style.backgroundColor = color || '#FF0000';
-  element.style.fontSize = (fontSize || 14) + 'px';
+  element.style.fontSize = (fontSize || 25) + 'px';
   element.setAttribute('data-ds-highlighted', 'true');
 }
 

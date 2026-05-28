@@ -5,7 +5,7 @@ const DEFAULT_SETTINGS = {
   partialSearch: false,
   specialCases: false,
   bgColor: '#FF0000',
-  fontSize: '12',
+  fontSize: '25',
   cleanerInput: '',
   dsAttachSelector: 'aside a',
   dsLinksSelector: 'a',
@@ -169,11 +169,10 @@ function cleanTextToSlug(value) {
 function setupTextCleaner() {
   const cleanerInput = document.getElementById('cleanerInput');
   const cleanerOutput = document.getElementById('cleanerOutput');
-  const cleanerBtn = document.getElementById('cleanerBtn');
   const cleanerCopyBtn = document.getElementById('cleanerCopyBtn');
   const cleanerClearBtn = document.getElementById('cleanerClearBtn');
 
-  if (!cleanerInput || !cleanerOutput || !cleanerBtn || !cleanerCopyBtn || !cleanerClearBtn) {
+  if (!cleanerInput || !cleanerOutput || !cleanerCopyBtn || !cleanerClearBtn) {
     return;
   }
 
@@ -181,15 +180,6 @@ function setupTextCleaner() {
     const rawValue = cleanerInput.value.trim();
     cleanerOutput.value = rawValue ? cleanTextToSlug(rawValue) : '';
   };
-
-  cleanerBtn.addEventListener('click', () => {
-    updateOutput();
-    if (!cleanerOutput.value) {
-      showCleanerMessage('Type some text to convert', 'error');
-      return;
-    }
-    showCleanerMessage('Text converted', 'success');
-  });
 
   cleanerInput.addEventListener('input', updateOutput);
 
@@ -274,6 +264,7 @@ async function loadSettings() {
     } else {
       itemList?.replaceChildren();
       updateDsItemCount(0);
+      syncMasterCheckbox();
       if (applyBtn) applyBtn.disabled = true;
     }
 
@@ -369,7 +360,7 @@ function setupAutoSave() {
 }
 
 const DS_COLORS = ['red', 'blue', 'gray', 'green', 'brown', 'yellow', 'pink'];
-const DS_DEFAULT_SIZE = 14;
+const DS_DEFAULT_SIZE = 25;
 
 function setupDocSearch() {
   const scanBtn = document.getElementById('dsScanBtn');
@@ -380,6 +371,38 @@ function setupDocSearch() {
   scanBtn.addEventListener('click', handleDsScan);
   applyBtn.addEventListener('click', handleDsApply);
   clearBtn.addEventListener('click', handleDsClear);
+
+  document.getElementById('dsMasterCheckbox')?.addEventListener('change', function () {
+    this.indeterminate = false;
+    document.querySelectorAll('.ds-row-checkbox').forEach(cb => {
+      cb.checked = this.checked;
+    });
+  });
+}
+
+function setDsMasterEnabled(enabled) {
+  const master = document.getElementById('dsMasterCheckbox');
+  if (!master) return;
+  master.disabled = !enabled;
+  if (!enabled) {
+    master.checked = false;
+    master.indeterminate = false;
+  }
+}
+
+function syncMasterCheckbox() {
+  const boxes = [...document.querySelectorAll('.ds-row-checkbox')];
+  const master = document.getElementById('dsMasterCheckbox');
+  if (!master) return;
+
+  if (!boxes.length) {
+    setDsMasterEnabled(false);
+    return;
+  }
+
+  setDsMasterEnabled(true);
+  master.checked = boxes.every(cb => cb.checked);
+  master.indeterminate = boxes.some(cb => cb.checked) && !master.checked;
 }
 
 function updateDsItemCount(n) {
@@ -395,6 +418,7 @@ function setDsLoading(isLoading, message = '') {
   const applyBtn = document.getElementById('dsApplyBtn');
   const clearBtn = document.getElementById('dsClearBtn');
   const hasItems = !!document.querySelector('#dsItemList .ds-item-row');
+  const master = document.getElementById('dsMasterCheckbox');
 
   if (loading) loading.hidden = !isLoading;
   if (loadingText) loadingText.textContent = message;
@@ -402,6 +426,7 @@ function setDsLoading(isLoading, message = '') {
   if (scanBtn) scanBtn.disabled = isLoading;
   if (applyBtn) applyBtn.disabled = isLoading || !hasItems;
   if (clearBtn) clearBtn.disabled = isLoading;
+  if (master) master.disabled = isLoading || !hasItems;
 }
 
 async function handleDsScan() {
@@ -442,6 +467,7 @@ async function handleDsScan() {
     } else {
       itemList.replaceChildren();
       updateDsItemCount(0);
+      syncMasterCheckbox();
       applyBtn.disabled = true;
       await chrome.storage.local.set({
         dsScanItems: [],
@@ -481,19 +507,36 @@ function renderDsItemList(items) {
     sizeInput.min = 8;
     sizeInput.max = 72;
 
+    const rowCheckbox = document.createElement('input');
+    rowCheckbox.type = 'checkbox';
+    rowCheckbox.className = 'ds-row-checkbox';
+    rowCheckbox.addEventListener('change', syncMasterCheckbox);
+
     const persistChangeHandler = () => {
       saveDsScanState().catch(err => console.error('🔴 [SAVE] dsScanState:', err));
     };
 
     colorInput.addEventListener('input', persistChangeHandler);
     colorInput.addEventListener('change', persistChangeHandler);
-    sizeInput.addEventListener('input', persistChangeHandler);
-    sizeInput.addEventListener('change', persistChangeHandler);
 
-    row.append(label, colorInput, sizeInput);
+    const handleSizeChange = () => {
+      if (rowCheckbox.checked) {
+        document.querySelectorAll('.ds-row-checkbox:checked').forEach(cb => {
+          const s = cb.closest('.ds-item-row')?.querySelector('input[type="number"]');
+          if (s && s !== sizeInput) s.value = sizeInput.value;
+        });
+      }
+      persistChangeHandler();
+    };
+
+    sizeInput.addEventListener('input', handleSizeChange);
+    sizeInput.addEventListener('change', handleSizeChange);
+
+    row.append(rowCheckbox, label, colorInput, sizeInput);
     list.appendChild(row);
   });
   updateDsItemCount(items.length);
+  syncMasterCheckbox();
 }
 
 async function saveDsScanState() {

@@ -167,6 +167,13 @@ body {
   cursor: pointer;
 }
 
+.checkbox-hint {
+  font-size: 11px;
+  color: #888;
+  margin: 2px 0 0 20px;
+  line-height: 1.4;
+}
+
 /* Buttons */
 .button-group {
   display: flex;
@@ -251,8 +258,29 @@ body {
 
 .ds-list-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 6px;
+}
+
+.ds-list-header .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ds-list-header .checkbox-label:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-row-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .ds-item-count {
