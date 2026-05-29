@@ -24,111 +24,122 @@
       <div id="tab1" class="tab-panel active">
         <h2>Link Finder</h2>
 
-        <div class="form-group">
-          <label for="searchUrl">URL to search:</label>
-          <input type="text" id="searchUrl" placeholder="Enter URL or text...">
-        </div>
-
-        <div class="form-row">
+        <div class="panel-scroll">
           <div class="form-group">
-            <label for="bgColor">Background:</label>
-            <input type="color" id="bgColor" value="#FF0000">
+            <label for="searchUrl">URL to search:</label>
+            <input type="text" id="searchUrl" placeholder="Enter URL or text...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bgColor">Background:</label>
+              <input type="color" id="bgColor" value="#FF0000">
+            </div>
+
+            <div class="form-group">
+              <label for="fontSize">Font size (px):</label>
+              <input type="number" id="fontSize" value="25" min="8" max="72">
+            </div>
           </div>
 
           <div class="form-group">
-            <label for="fontSize">Font size (px):</label>
-            <input type="number" id="fontSize" value="25" min="8" max="72">
+            <label class="checkbox-label">
+              <input type="checkbox" id="searchText">
+              Search in visible text
+            </label>
+            <p class="checkbox-hint">Searches visible page text in addition to link href attributes.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="partialSearch">
+              Partial search
+            </label>
+            <p class="checkbox-hint">Allows partial matches (instead of exact) and includes relative paths (./, ../) and protocol-relative URLs (//example.com).</p>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="filenameSearch">
+              Search by filename
+            </label>
+            <p class="checkbox-hint">Matches the file name at the end of the link path (e.g. searching "/file.pdf" or "file.pdf" finds "domain.com/path/file.pdf"). Case-insensitive.</p>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="searchText">
-            Search in visible text
-          </label>
-          <p class="checkbox-hint">Searches visible page text in addition to link href attributes.</p>
+        <div class="panel-footer">
+          <div class="button-group">
+            <button id="searchBtn" class="btn btn-primary">Search</button>
+            <button id="clearBtn" class="btn btn-secondary">Clear</button>
+          </div>
+          <div id="resultMessage" class="result-message"></div>
         </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="partialSearch">
-            Partial search
-          </label>
-          <p class="checkbox-hint">Allows partial matches (instead of exact) and includes relative paths (./, ../) and protocol-relative URLs (//example.com).</p>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="filenameSearch">
-            Search by filename
-          </label>
-          <p class="checkbox-hint">Matches the file name at the end of the link path (e.g. searching "/file.pdf" or "file.pdf" finds "domain.com/path/file.pdf"). Case-insensitive.</p>
-        </div>
-
-        <div class="button-group">
-          <button id="searchBtn" class="btn btn-primary">Search</button>
-          <button id="clearBtn" class="btn btn-secondary">Clear</button>
-        </div>
-
-        <div id="resultMessage" class="result-message"></div>
       </div>
 
       <!-- Tab 2: Text Cleaner -->
       <div id="tab2" class="tab-panel">
         <h2>Text Cleaner</h2>
 
-        <div class="form-group">
-          <label for="cleanerInput">Text:</label>
-          <textarea id="cleanerInput" rows="4" placeholder="Type your text..."></textarea>
+        <div class="panel-scroll">
+          <div class="form-group">
+            <label for="cleanerInput">Text:</label>
+            <textarea id="cleanerInput" rows="4" placeholder="Type your text..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="cleanerOutput">Result:</label>
+            <input type="text" id="cleanerOutput" readonly>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="cleanerOutput">Result:</label>
-          <input type="text" id="cleanerOutput" readonly>
+        <div class="panel-footer">
+          <div class="button-group">
+            <button id="cleanerCopyBtn" class="btn btn-secondary">Copy</button>
+            <button id="cleanerClearBtn" class="btn btn-secondary">Clear</button>
+          </div>
+          <div id="cleanerMessage" class="result-message"></div>
         </div>
-
-        <div class="button-group">
-          <button id="cleanerCopyBtn" class="btn btn-secondary">Copy</button>
-          <button id="cleanerClearBtn" class="btn btn-secondary">Clear</button>
-        </div>
-
-        <div id="cleanerMessage" class="result-message"></div>
       </div>
 
       <!-- Tab 3: Doc Search -->
       <div id="tab3" class="tab-panel">
         <h2>Doc Search</h2>
 
-        <div class="form-group">
-          <label for="dsAttachSelector">Reference selector:</label>
-          <input type="text" id="dsAttachSelector" placeholder="aside a">
-        </div>
-
-        <div class="form-group">
-          <label for="dsLinksSelector">Body selector:</label>
-          <input type="text" id="dsLinksSelector" placeholder="a">
-        </div>
-
-        <div class="button-group">
-          <button id="dsScanBtn" class="btn btn-primary">Scan</button>
-          <button id="dsApplyBtn" class="btn btn-primary" disabled>Apply</button>
-          <button id="dsClearBtn" class="btn btn-secondary">Clear</button>
-        </div>
-
-        <div class="ds-list-panel">
-          <div class="ds-list-header">
-            <label class="checkbox-label">
-              <input type="checkbox" id="dsMasterCheckbox" disabled> All
-            </label>
-            <span id="dsItemCount" class="ds-item-count">Total: 0</span>
+        <div class="panel-scroll">
+          <div class="form-group">
+            <label for="dsAttachSelector">Reference selector:</label>
+            <input type="text" id="dsAttachSelector" placeholder="aside a">
           </div>
-          <div id="dsListLoading" class="ds-list-loading" hidden>
-            <span class="ds-spinner"></span>
-            <span id="dsLoadingText" class="ds-loading-text"></span>
+
+          <div class="form-group">
+            <label for="dsLinksSelector">Body selector:</label>
+            <input type="text" id="dsLinksSelector" placeholder="a">
           </div>
-          <div id="dsItemList" class="ds-item-list"></div>
+
+          <div class="button-group">
+            <button id="dsScanBtn" class="btn btn-primary">Scan</button>
+            <button id="dsApplyBtn" class="btn btn-primary" disabled>Apply</button>
+            <button id="dsClearBtn" class="btn btn-secondary">Clear</button>
+          </div>
+
+          <div class="ds-list-panel">
+            <div class="ds-list-header">
+              <label class="checkbox-label">
+                <input type="checkbox" id="dsMasterCheckbox" disabled> All
+              </label>
+              <span id="dsItemCount" class="ds-item-count">Total: 0</span>
+            </div>
+            <div id="dsListLoading" class="ds-list-loading" hidden>
+              <span class="ds-spinner"></span>
+              <span id="dsLoadingText" class="ds-loading-text"></span>
+            </div>
+            <div id="dsItemList" class="ds-item-list"></div>
+          </div>
         </div>
-        <div id="dsMessage" class="result-message"></div>
+
+        <div class="panel-footer">
+          <div id="dsMessage" class="result-message"></div>
+        </div>
       </div>
 
       <!-- Tab 4: Placeholder -->
