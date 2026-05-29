@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function performSearch(data) {
-  const { searchUrl, bgColor, fontSize, searchText, partialSearch, specialCases } = data;
+  const { searchUrl, bgColor, fontSize, searchText, partialSearch, filenameSearch } = data;
 
   // Clear previous highlights
   clearHighlights();
@@ -56,7 +56,7 @@ function performSearch(data) {
     const href = link.getAttribute('href');
 
     // Resolve href to absolute URL
-    const resolvedHref = resolveUrl(href, currentDomain, currentPath, specialCases);
+    const resolvedHref = resolveUrl(href, currentDomain, currentPath, partialSearch);
 
     if (!resolvedHref) return;
 
@@ -64,7 +64,7 @@ function performSearch(data) {
     const normalizedHref = normalizeUrl(resolvedHref, currentDomain);
 
     // Check if it matches
-    const matches = matchesSearch(normalizedHref, normalizedSearchUrl, partialSearch);
+    const matches = matchesSearch(normalizedHref, normalizedSearchUrl, partialSearch, filenameSearch, searchUrl);
 
     if (matches) {
       applyHighlight(link, bgColor, fontSize);
@@ -268,7 +268,7 @@ function normalizeUrl(url, currentDomain) {
 }
 
 // Resolve relative URLs to absolute
-function resolveUrl(href, currentDomain, currentPath, specialCases) {
+function resolveUrl(href, currentDomain, currentPath, partialSearch) {
   if (!href) return null;
 
   const trimmedHref = href.trim();
@@ -280,7 +280,7 @@ function resolveUrl(href, currentDomain, currentPath, specialCases) {
 
   // Protocol-relative URLs (//example.com/path)
   if (trimmedHref.startsWith('//')) {
-    if (specialCases) {
+    if (partialSearch) {
       return 'https:' + trimmedHref;
     }
     return null;
@@ -293,7 +293,7 @@ function resolveUrl(href, currentDomain, currentPath, specialCases) {
 
   // Relative paths (./ or ../)
   if (trimmedHref.startsWith('./') || trimmedHref.startsWith('../')) {
-    if (specialCases) {
+    if (partialSearch) {
       try {
         // Use URL constructor to resolve relative paths
         const baseUrl = currentDomain + currentPath;
@@ -307,7 +307,7 @@ function resolveUrl(href, currentDomain, currentPath, specialCases) {
   }
 
   // Other relative paths (path/to/file)
-  if (specialCases) {
+  if (partialSearch) {
     try {
       const baseUrl = currentDomain + currentPath;
       const resolved = new URL(trimmedHref, baseUrl);
@@ -320,9 +320,27 @@ function resolveUrl(href, currentDomain, currentPath, specialCases) {
   return null;
 }
 
+// Get the file name (last path segment) of a URL
+function getFilename(url) {
+  if (!url) return '';
+  const path = url.split('#')[0].split('?')[0];
+  const segments = path.split('/');
+  return segments[segments.length - 1] || '';
+}
+
 // Check if normalized href matches normalized search URL
-function matchesSearch(normalizedHref, normalizedSearchUrl, partialSearch) {
-  if (!normalizedHref || !normalizedSearchUrl) return false;
+function matchesSearch(normalizedHref, normalizedSearchUrl, partialSearch, filenameSearch, rawSearchUrl) {
+  if (!normalizedHref) return false;
+
+  // Filename search: match against the last path segment, case-insensitive
+  if (filenameSearch) {
+    const hrefFilename = getFilename(normalizedHref).toLowerCase();
+    const searchFilename = getFilename(rawSearchUrl).toLowerCase();
+    if (!hrefFilename || !searchFilename) return false;
+    return hrefFilename.includes(searchFilename);
+  }
+
+  if (!normalizedSearchUrl) return false;
 
   if (partialSearch) {
     // Partial search: href must START WITH search URL

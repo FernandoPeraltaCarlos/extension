@@ -1,39 +1,64 @@
-# Revisión de implementación: Tab-1, Tab-2 y Tab-3
+# Plan: Fusionar "Partial search" y "Match special cases" en TAB-1
 
-## Estado general
+## Contexto
 
-La implementación está correcta en los puntos funcionales revisados. Tab-1 y Tab-2 cumplen con lo solicitado, y Tab-3 ya corrige la sincronización del checkbox master y la propagación de tamaño entre filas seleccionadas.
+En el **TAB-1 (Link Finder)** existen dos checkboxes separados con comportamientos relacionados:
 
-Queda un detalle menor de consistencia de UI: el label del checkbox master de Tab-3 sigue en español (`Todos`) aunque el resto del popup está en inglés.
+- **`partialSearch`** → en `matchesSearch` (`content.js:345`): decide `startsWith()` (parcial) vs `===` (exacto).
+- **`specialCases`** → en `resolveUrl` (`content.js:271-321`): decide si se resuelven rutas relativas (`./`, `../`), protocol-relative (`//example.com`) y otras relativas.
 
-## Correcto
+Tenerlos separados no aporta valor: el usuario que quiere una búsqueda flexible normalmente quiere ambos. **Objetivo:** dejar **un solo checkbox** `partialSearch` con etiqueta **"Partial search"** que, al activarse, habilite **a la vez** la coincidencia parcial y la resolución de URLs especiales. Al desactivarlo: coincidencia exacta y sin casos especiales. Se **elimina** por completo el checkbox `specialCases`.
 
-- Tab-1 usa `fontSize` default `25` en `popup.js` y `popup.html`.
-- Tab-1 incluye leyendas para `searchText`, `partialSearch` y `specialCases`.
-- Las leyendas agregadas en Tab-1 ya están en inglés.
-- Tab-2 eliminó `cleanerBtn` del HTML y de la lógica JS.
-- No había CSS exclusivo de `#cleanerBtn`, por lo que no era necesario borrar estilos.
-- Tab-3 usa tamaño default `25` en `DS_DEFAULT_SIZE` y en `content.js`.
-- Tab-3 agrega checkbox master y checkboxes por fila.
-- `syncMasterCheckbox()` ya se llama cuando la lista queda vacía.
-- El checkbox master ya limpia `indeterminate` al cambiar.
-- El cambio de `fontSize` ya usa un handler común para `input` y `change`, propaga a las filas seleccionadas y persiste el estado.
-- `popup.js` y `content.js` pasan validación sintáctica con `node --check`.
+---
 
-## Corrección sugerida
+## Estrategia
 
-1. Cambiar el texto del checkbox master de Tab-3 a inglés.
+Se conserva el id/clave existente **`partialSearch`** y se reutiliza su valor también donde antes se usaba `specialCases`. Así la persistencia previa del usuario sigue siendo válida y solo se elimina el flag `specialCases` de toda la cadena (HTML → popup.js → content.js).
 
-Contexto: en `popup.html`, el checkbox `#dsMasterCheckbox` muestra `Todos`, mientras que el resto de la UI del popup usa textos en inglés.
+---
 
-Propuesta: cambiar `Todos` por `All` para mantener consistencia de idioma.
+## Cambios por archivo
 
-## Pruebas recomendadas
+### 1. `popup.html`
 
-- Abrir Tab-1 y verificar que las tres leyendas bajo los checkboxes están en inglés.
-- Abrir Tab-3 y verificar que el checkbox master muestra `All`.
-- Hacer scan con resultados, seleccionar varias filas, cambiar tamaño y verificar que todas las seleccionadas cambian.
-- Marcar master, desmarcar una fila y verificar que el master queda `indeterminate`.
-- Volver a marcar/desmarcar master y verificar que no queda `indeterminate`.
-- Hacer scan sin resultados y verificar que master queda desmarcado.
-- Recargar popup en la misma URL y verificar que los tamaños persistidos se restauran.
+- **Eliminar** el bloque `form-group` del checkbox `specialCases` (~líneas 60-66).
+- **Actualizar el hint** del checkbox `partialSearch` (~línea 57) para reflejar que ahora también cubre los casos especiales:
+  ```html
+  <p class="checkbox-hint">Allows partial matches (instead of exact) and includes relative paths (./, ../) and protocol-relative URLs (//example.com).</p>
+  ```
+
+### 2. `popup.js` (eliminar todo rastro de `specialCases`)
+
+- **`DEFAULT_SETTINGS`** (~línea 6): eliminar `specialCases: false,`.
+- **`handleSearch`** (~líneas 70, 90): eliminar la lectura `const specialCases = ...` y la propiedad `specialCases` del objeto `data`.
+- **`loadSettings`** (~línea 225): eliminar la línea que restaura `specialCases`.
+- **`saveSettings`** (~línea 323): eliminar `specialCases: ...`.
+- **`setupAutoSave`** (~líneas 345, 355): eliminar la obtención del elemento `specialCases` y su `addEventListener`.
+
+### 3. `content.js` (usar `partialSearch` donde se usaba `specialCases`)
+
+- **`performSearch`** (~línea 39): quitar `specialCases` del destructuring de `data`.
+- **`performSearch`** (~línea 59): pasar `partialSearch` en lugar de `specialCases` a `resolveUrl`:
+  ```js
+  const resolvedHref = resolveUrl(href, currentDomain, currentPath, partialSearch);
+  ```
+- **`resolveUrl`** (~línea 271): renombrar el parámetro `specialCases` → `partialSearch`. Las tres comprobaciones internas (`~líneas 283, 296, 310`) pasan a usar `partialSearch`. La lógica no cambia, solo la fuente del flag.
+
+> `matchesSearch` ya usa `partialSearch` (`content.js:345`), no requiere cambios para esta fusión.
+
+---
+
+## Nota sobre persistencia
+
+La clave `specialCases` guardada previamente en `chrome.storage.local` queda huérfana pero es inofensiva (`chrome.storage.local.get(DEFAULT_SETTINGS)` ya no la solicita). No requiere migración ni limpieza.
+
+---
+
+## Verificación (manual — el proyecto no tiene tests ni build)
+
+1. Recargar la extensión en `chrome://extensions`.
+2. Abrir el popup → TAB-1. Confirmar que **solo aparece un** checkbox "Partial search" y que **ya no existe** "Match special cases".
+3. **Parcial + casos especiales activos:** en una página con enlaces relativos (`./doc`, `../x`, `//cdn.com/a`), marcar "Partial search", buscar un fragmento → deben resaltarse incluyendo los enlaces relativos/protocol-relative.
+4. **Desactivado:** desmarcar "Partial search" → debe exigir coincidencia exacta y **no** resaltar enlaces relativos/protocol-relative.
+5. **Persistencia:** alternar el checkbox, cerrar y reabrir el popup → debe conservar el estado.
+6. Revisar la consola del content script y del popup por errores (especialmente `undefined` por referencias residuales a `specialCases`).

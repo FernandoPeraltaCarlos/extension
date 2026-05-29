@@ -3,7 +3,7 @@ const DEFAULT_SETTINGS = {
   searchUrl: '',
   searchText: false,
   partialSearch: false,
-  specialCases: false,
+  filenameSearch: false,
   bgColor: '#FF0000',
   fontSize: '25',
   cleanerInput: '',
@@ -66,7 +66,7 @@ async function handleSearch() {
   const fontSize = document.getElementById('fontSize').value;
   const searchText = document.getElementById('searchText').checked;
   const partialSearch = document.getElementById('partialSearch').checked;
-  const specialCases = document.getElementById('specialCases').checked;
+  const filenameSearch = document.getElementById('filenameSearch').checked;
 
   if (!searchUrl) {
     showMessage('Please enter a URL or text to search', 'error');
@@ -85,7 +85,7 @@ async function handleSearch() {
         fontSize,
         searchText,
         partialSearch,
-        specialCases
+        filenameSearch
       }
     });
 
@@ -219,7 +219,7 @@ async function loadSettings() {
     document.getElementById('searchUrl').value = settings.searchUrl;
     document.getElementById('searchText').checked = settings.searchText;
     document.getElementById('partialSearch').checked = settings.partialSearch;
-    document.getElementById('specialCases').checked = settings.specialCases;
+    document.getElementById('filenameSearch').checked = settings.filenameSearch;
     document.getElementById('bgColor').value = settings.bgColor;
     document.getElementById('fontSize').value = settings.fontSize;
     const cleanerInput = document.getElementById('cleanerInput');
@@ -316,7 +316,7 @@ async function saveSettings() {
       searchUrl: document.getElementById('searchUrl').value,
       searchText: document.getElementById('searchText').checked,
       partialSearch: document.getElementById('partialSearch').checked,
-      specialCases: document.getElementById('specialCases').checked,
+      filenameSearch: document.getElementById('filenameSearch').checked,
       bgColor: document.getElementById('bgColor').value,
       fontSize: document.getElementById('fontSize').value,
       cleanerInput: document.getElementById('cleanerInput')?.value || '',
@@ -337,7 +337,7 @@ function setupAutoSave() {
   const searchUrl = document.getElementById('searchUrl');
   const searchText = document.getElementById('searchText');
   const partialSearch = document.getElementById('partialSearch');
-  const specialCases = document.getElementById('specialCases');
+  const filenameSearch = document.getElementById('filenameSearch');
   const bgColor = document.getElementById('bgColor');
   const fontSize = document.getElementById('fontSize');
   const cleanerInput = document.getElementById('cleanerInput');
@@ -346,7 +346,7 @@ function setupAutoSave() {
   searchUrl.addEventListener('input', saveSettings);
   searchText.addEventListener('change', saveSettings);
   partialSearch.addEventListener('change', saveSettings);
-  specialCases.addEventListener('change', saveSettings);
+  filenameSearch.addEventListener('change', saveSettings);
   bgColor.addEventListener('change', saveSettings);
   fontSize.addEventListener('input', saveSettings);
   if (cleanerInput) {

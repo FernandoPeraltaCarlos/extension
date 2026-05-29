@@ -54,15 +54,15 @@
             <input type="checkbox" id="partialSearch">
             Partial search
           </label>
-          <p class="checkbox-hint">Allows partial matches instead of requiring an exact match.</p>
+          <p class="checkbox-hint">Allows partial matches (instead of exact) and includes relative paths (./, ../) and protocol-relative URLs (//example.com).</p>
         </div>
 
         <div class="form-group">
           <label class="checkbox-label">
-            <input type="checkbox" id="specialCases">
-            Match special cases (protocol-relative, ./, ../)
+            <input type="checkbox" id="filenameSearch">
+            Search by filename
           </label>
-          <p class="checkbox-hint">Includes relative paths (./, ../) and protocol-relative URLs (//example.com).</p>
+          <p class="checkbox-hint">Matches the file name at the end of the link path (e.g. searching "/file.pdf" or "file.pdf" finds "domain.com/path/file.pdf"). Case-insensitive.</p>
         </div>
 
         <div class="button-group">
