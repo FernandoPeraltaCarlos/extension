@@ -730,7 +730,26 @@ function setupChecklist() {
     addChecklistTodo();
   });
 
+  document.getElementById('clCopyCommentsBtn')?.addEventListener('click', copyChecklistComments);
+
   document.getElementById('clResetBtn')?.addEventListener('click', resetChecklist);
+}
+
+async function copyChecklistComments() {
+  const comments = document.getElementById('clTodosComments')?.value.trim() || '';
+
+  if (!comments) {
+    showChecklistMessage('No hay comments para copiar', 'error');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(comments);
+    showChecklistMessage('Comments copiados', 'success');
+  } catch (error) {
+    console.error('Error copying checklist comments:', error);
+    showChecklistMessage('Error al copiar comments', 'error');
+  }
 }
 
 function addChecklistTodo(data = {}, options = {}) {

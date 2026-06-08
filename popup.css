@@ -519,6 +519,14 @@ body {
   border-color: #000000;
 }
 
+.cl-copy-comments-btn {
+  display: block;
+  margin-top: 6px;
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 .cl-counter {
   flex-shrink: 0;
   padding: 8px 12px;
