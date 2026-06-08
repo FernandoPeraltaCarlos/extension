@@ -14,6 +14,11 @@ const DEFAULT_SETTINGS = {
   dsScanPageUrl: '',    // URL del tab donde se hizo el último scan
   clTicketType: 'amend',
   clVerificarContexto: false,
+  clVerifAdjuntos: false,
+  clVerifRedirecciones: false,
+  clVerifCrawl: false,
+  clVerifEntrypoints: false,
+  clVerifDatosNewPage: false,
   clTodos: [],
   clItempaths: '',
   clVerifItempaths: false,
@@ -284,6 +289,21 @@ async function loadSettings() {
     const clVerificarContexto = document.getElementById('clVerificarContexto');
     if (clVerificarContexto) clVerificarContexto.checked = !!settings.clVerificarContexto;
 
+    const clVerifAdjuntos = document.getElementById('clVerifAdjuntos');
+    if (clVerifAdjuntos) clVerifAdjuntos.checked = !!settings.clVerifAdjuntos;
+
+    const clVerifRedirecciones = document.getElementById('clVerifRedirecciones');
+    if (clVerifRedirecciones) clVerifRedirecciones.checked = !!settings.clVerifRedirecciones;
+
+    const clVerifCrawl = document.getElementById('clVerifCrawl');
+    if (clVerifCrawl) clVerifCrawl.checked = !!settings.clVerifCrawl;
+
+    const clVerifEntrypoints = document.getElementById('clVerifEntrypoints');
+    if (clVerifEntrypoints) clVerifEntrypoints.checked = !!settings.clVerifEntrypoints;
+
+    const clVerifDatosNewPage = document.getElementById('clVerifDatosNewPage');
+    if (clVerifDatosNewPage) clVerifDatosNewPage.checked = !!settings.clVerifDatosNewPage;
+
     renderChecklistTodos(Array.isArray(settings.clTodos) ? settings.clTodos : []);
 
     const clItempaths = document.getElementById('clItempaths');
@@ -299,6 +319,7 @@ async function loadSettings() {
     if (clVerifQaLinks) clVerifQaLinks.checked = !!settings.clVerifQaLinks;
 
     syncTodosCommentsReadonly();
+    updateTicketTypeVisibility();
     updateChecklistCounter();
 
     const activeTab = settings.activeTab || 'tab1';
@@ -357,6 +378,11 @@ async function saveSettings() {
       dsLinksSelector: document.getElementById('dsLinksSelector')?.value || 'a',
       clTicketType: document.getElementById('clTicketType')?.value || 'amend',
       clVerificarContexto: document.getElementById('clVerificarContexto')?.checked || false,
+      clVerifAdjuntos: document.getElementById('clVerifAdjuntos')?.checked || false,
+      clVerifRedirecciones: document.getElementById('clVerifRedirecciones')?.checked || false,
+      clVerifCrawl: document.getElementById('clVerifCrawl')?.checked || false,
+      clVerifEntrypoints: document.getElementById('clVerifEntrypoints')?.checked || false,
+      clVerifDatosNewPage: document.getElementById('clVerifDatosNewPage')?.checked || false,
       clItempaths: document.getElementById('clItempaths')?.value || '',
       clVerifItempaths: document.getElementById('clVerifItempaths')?.checked || false,
       clVerifComentarios: document.getElementById('clVerifComentarios')?.checked || false,
@@ -397,10 +423,26 @@ function setupAutoSave() {
   if (dsAttachSelector) dsAttachSelector.addEventListener('input', saveSettings);
   if (dsLinksSelector) dsLinksSelector.addEventListener('input', saveSettings);
 
-  document.getElementById('clTicketType')?.addEventListener('change', saveSettings);
+  document.getElementById('clTicketType')?.addEventListener('change', () => {
+    updateTicketTypeVisibility();
+    saveSettings();
+    updateChecklistCounter();
+  });
   document.getElementById('clVerificarContexto')?.addEventListener('change', () => {
     saveSettings();
     updateChecklistCounter();
+  });
+  [
+    'clVerifAdjuntos',
+    'clVerifRedirecciones',
+    'clVerifCrawl',
+    'clVerifEntrypoints',
+    'clVerifDatosNewPage'
+  ].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => {
+      saveSettings();
+      updateChecklistCounter();
+    });
   });
   document.getElementById('clItempaths')?.addEventListener('input', saveSettings);
   document.getElementById('clVerifItempaths')?.addEventListener('change', () => {
@@ -796,14 +838,32 @@ function syncTodosCommentsReadonly() {
   target.value = comments.join('\n\n');
 }
 
+function updateTicketTypeVisibility() {
+  const ticketType = document.getElementById('clTicketType')?.value || 'amend';
+  const demiseFields = document.getElementById('clDemiseFields');
+  const newPageFields = document.getElementById('clNewPageFields');
+
+  if (demiseFields) demiseFields.hidden = ticketType !== 'demise';
+  if (newPageFields) newPageFields.hidden = ticketType !== 'new page';
+}
+
+function isChecklistCheckboxVisible(checkbox) {
+  return !checkbox.closest('[hidden]');
+}
+
 function updateChecklistCounter() {
   const checkboxes = [
     document.getElementById('clVerificarContexto'),
+    document.getElementById('clVerifAdjuntos'),
+    document.getElementById('clVerifRedirecciones'),
+    document.getElementById('clVerifCrawl'),
+    document.getElementById('clVerifEntrypoints'),
+    document.getElementById('clVerifDatosNewPage'),
     ...document.querySelectorAll('#clTodoList .cl-todo-checkbox'),
     document.getElementById('clVerifItempaths'),
     document.getElementById('clVerifComentarios'),
     document.getElementById('clVerifQaLinks')
-  ].filter(Boolean);
+  ].filter(checkbox => checkbox && isChecklistCheckboxVisible(checkbox));
 
   const total = checkboxes.length;
   const checked = checkboxes.filter(checkbox => checkbox.checked).length;
@@ -826,6 +886,11 @@ async function resetChecklist() {
 
   const clTicketType = document.getElementById('clTicketType');
   const clVerificarContexto = document.getElementById('clVerificarContexto');
+  const clVerifAdjuntos = document.getElementById('clVerifAdjuntos');
+  const clVerifRedirecciones = document.getElementById('clVerifRedirecciones');
+  const clVerifCrawl = document.getElementById('clVerifCrawl');
+  const clVerifEntrypoints = document.getElementById('clVerifEntrypoints');
+  const clVerifDatosNewPage = document.getElementById('clVerifDatosNewPage');
   const clItempaths = document.getElementById('clItempaths');
   const clVerifItempaths = document.getElementById('clVerifItempaths');
   const clVerifComentarios = document.getElementById('clVerifComentarios');
@@ -834,6 +899,11 @@ async function resetChecklist() {
 
   if (clTicketType) clTicketType.value = 'amend';
   if (clVerificarContexto) clVerificarContexto.checked = false;
+  if (clVerifAdjuntos) clVerifAdjuntos.checked = false;
+  if (clVerifRedirecciones) clVerifRedirecciones.checked = false;
+  if (clVerifCrawl) clVerifCrawl.checked = false;
+  if (clVerifEntrypoints) clVerifEntrypoints.checked = false;
+  if (clVerifDatosNewPage) clVerifDatosNewPage.checked = false;
   if (clItempaths) clItempaths.value = '';
   if (clVerifItempaths) clVerifItempaths.checked = false;
   if (clVerifComentarios) clVerifComentarios.checked = false;
@@ -843,6 +913,11 @@ async function resetChecklist() {
   await chrome.storage.local.set({
     clTicketType: 'amend',
     clVerificarContexto: false,
+    clVerifAdjuntos: false,
+    clVerifRedirecciones: false,
+    clVerifCrawl: false,
+    clVerifEntrypoints: false,
+    clVerifDatosNewPage: false,
     clTodos: [],
     clItempaths: '',
     clVerifItempaths: false,
@@ -851,6 +926,7 @@ async function resetChecklist() {
   });
   await chrome.storage.local.remove('clTodosComments');
 
+  updateTicketTypeVisibility();
   updateChecklistCounter();
   showChecklistMessage('Checklist reseteado', 'success');
 }

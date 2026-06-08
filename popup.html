@@ -163,6 +163,49 @@
             </label>
           </div>
 
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="clVerifAdjuntos">
+              ¿Fue verificada la clasificación de los adjuntos?
+            </label>
+          </div>
+
+          <div id="clDemiseFields" hidden>
+            <div class="cl-section-label">Demise</div>
+
+            <div class="cl-verif-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="clVerifRedirecciones">
+                ¿Fueron creadas todas las redirecciones de las páginas a eliminar?
+              </label>
+            </div>
+
+            <div class="cl-verif-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="clVerifCrawl">
+                ¿Fue solicitado el crawl?
+              </label>
+            </div>
+
+            <div class="cl-verif-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="clVerifEntrypoints">
+                ¿Fueron eliminados todos los entrypoints?
+              </label>
+            </div>
+          </div>
+
+          <div id="clNewPageFields" hidden>
+            <div class="cl-section-label">New page</div>
+
+            <div class="cl-verif-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="clVerifDatosNewPage">
+                ¿Se proporcionaron todos los datos necesarios para crear la página?
+              </label>
+            </div>
+          </div>
+
           <div class="cl-section-label">TODOs</div>
           <div id="clTodoList"></div>
           <button id="clAddTodoBtn" class="cl-add-btn">+ Add TODO</button>
