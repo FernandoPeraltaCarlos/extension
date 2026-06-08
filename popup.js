@@ -12,6 +12,13 @@ const DEFAULT_SETTINGS = {
   dsScanItems: [],      // Array de { href, text } del último scan
   dsItemConfigs: [],    // Array de { color, fontSize } por cada item
   dsScanPageUrl: '',    // URL del tab donde se hizo el último scan
+  clTicketType: 'amend',
+  clVerificarContexto: false,
+  clTodos: [],
+  clItempaths: '',
+  clVerifItempaths: false,
+  clVerifComentarios: false,
+  clVerifQaLinks: false,
   activeTab: 'tab1'
 };
 
@@ -55,6 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Doc Search functionality
   setupDocSearch();
+
+  // Ticket QC functionality
+  setupChecklist();
 
   // Add change listeners to save settings automatically - AFTER loading
   setupAutoSave();
@@ -268,6 +278,29 @@ async function loadSettings() {
       if (applyBtn) applyBtn.disabled = true;
     }
 
+    const clTicketType = document.getElementById('clTicketType');
+    if (clTicketType) clTicketType.value = settings.clTicketType || 'amend';
+
+    const clVerificarContexto = document.getElementById('clVerificarContexto');
+    if (clVerificarContexto) clVerificarContexto.checked = !!settings.clVerificarContexto;
+
+    renderChecklistTodos(Array.isArray(settings.clTodos) ? settings.clTodos : []);
+
+    const clItempaths = document.getElementById('clItempaths');
+    if (clItempaths) clItempaths.value = settings.clItempaths || '';
+
+    const clVerifItempaths = document.getElementById('clVerifItempaths');
+    if (clVerifItempaths) clVerifItempaths.checked = !!settings.clVerifItempaths;
+
+    const clVerifComentarios = document.getElementById('clVerifComentarios');
+    if (clVerifComentarios) clVerifComentarios.checked = !!settings.clVerifComentarios;
+
+    const clVerifQaLinks = document.getElementById('clVerifQaLinks');
+    if (clVerifQaLinks) clVerifQaLinks.checked = !!settings.clVerifQaLinks;
+
+    syncTodosCommentsReadonly();
+    updateChecklistCounter();
+
     const activeTab = settings.activeTab || 'tab1';
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabPanels = document.querySelectorAll('.tab-panel');
@@ -321,7 +354,13 @@ async function saveSettings() {
       fontSize: document.getElementById('fontSize').value,
       cleanerInput: document.getElementById('cleanerInput')?.value || '',
       dsAttachSelector: document.getElementById('dsAttachSelector')?.value || 'aside a',
-      dsLinksSelector: document.getElementById('dsLinksSelector')?.value || 'a'
+      dsLinksSelector: document.getElementById('dsLinksSelector')?.value || 'a',
+      clTicketType: document.getElementById('clTicketType')?.value || 'amend',
+      clVerificarContexto: document.getElementById('clVerificarContexto')?.checked || false,
+      clItempaths: document.getElementById('clItempaths')?.value || '',
+      clVerifItempaths: document.getElementById('clVerifItempaths')?.checked || false,
+      clVerifComentarios: document.getElementById('clVerifComentarios')?.checked || false,
+      clVerifQaLinks: document.getElementById('clVerifQaLinks')?.checked || false
     };
 
     console.log('🟢 [SAVE] Saving settings:', settings);
@@ -357,6 +396,25 @@ function setupAutoSave() {
   const dsLinksSelector = document.getElementById('dsLinksSelector');
   if (dsAttachSelector) dsAttachSelector.addEventListener('input', saveSettings);
   if (dsLinksSelector) dsLinksSelector.addEventListener('input', saveSettings);
+
+  document.getElementById('clTicketType')?.addEventListener('change', saveSettings);
+  document.getElementById('clVerificarContexto')?.addEventListener('change', () => {
+    saveSettings();
+    updateChecklistCounter();
+  });
+  document.getElementById('clItempaths')?.addEventListener('input', saveSettings);
+  document.getElementById('clVerifItempaths')?.addEventListener('change', () => {
+    saveSettings();
+    updateChecklistCounter();
+  });
+  document.getElementById('clVerifComentarios')?.addEventListener('change', () => {
+    saveSettings();
+    updateChecklistCounter();
+  });
+  document.getElementById('clVerifQaLinks')?.addEventListener('change', () => {
+    saveSettings();
+    updateChecklistCounter();
+  });
 }
 
 const DS_COLORS = ['red', 'blue', 'gray', 'green', 'brown', 'yellow', 'pink'];
@@ -620,6 +678,187 @@ async function handleDsClear() {
 function showDsMessage(message, type) {
   const el = document.getElementById('dsMessage');
   if (!el) return;
+  el.textContent = message;
+  el.className = `result-message show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function setupChecklist() {
+  document.getElementById('clAddTodoBtn')?.addEventListener('click', () => {
+    addChecklistTodo();
+  });
+
+  document.getElementById('clResetBtn')?.addEventListener('click', resetChecklist);
+}
+
+function addChecklistTodo(data = {}, options = {}) {
+  const id = data.id || `todo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const item = document.createElement('div');
+  item.className = 'cl-todo-item';
+  item.dataset.todoId = id;
+
+  const header = document.createElement('div');
+  header.className = 'cl-todo-header';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.className = 'cl-todo-checkbox';
+  checkbox.checked = !!data.checked;
+  checkbox.addEventListener('change', () => {
+    saveChecklistTodos();
+    updateChecklistCounter();
+  });
+
+  const label = document.createElement('label');
+  label.className = 'checkbox-label';
+  label.append(checkbox, document.createTextNode('TODO'));
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.className = 'cl-todo-delete';
+  deleteBtn.textContent = 'X';
+  deleteBtn.title = 'Eliminar TODO';
+  deleteBtn.addEventListener('click', () => removeChecklistTodo(id));
+
+  header.append(label, deleteBtn);
+
+  const textInput = document.createElement('textarea');
+  textInput.className = 'cl-todo-text';
+  textInput.placeholder = 'Descripcion del TODO...';
+  textInput.value = data.text || '';
+  textInput.addEventListener('input', saveChecklistTodos);
+
+  const commentsLabel = document.createElement('span');
+  commentsLabel.className = 'cl-comments-label';
+  commentsLabel.textContent = 'Comments:';
+
+  const commentsInput = document.createElement('textarea');
+  commentsInput.className = 'cl-todo-comments';
+  commentsInput.placeholder = 'Comments...';
+  commentsInput.value = data.comments || '';
+  commentsInput.addEventListener('input', () => {
+    saveChecklistTodos();
+    syncTodosCommentsReadonly();
+  });
+
+  item.append(header, textInput, commentsLabel, commentsInput);
+  document.getElementById('clTodoList')?.appendChild(item);
+
+  if (!options.silent) {
+    saveChecklistTodos();
+    syncTodosCommentsReadonly();
+    updateChecklistCounter();
+  }
+}
+
+function removeChecklistTodo(id) {
+  document.querySelector(`#clTodoList [data-todo-id="${id}"]`)?.remove();
+  saveChecklistTodos();
+  syncTodosCommentsReadonly();
+  updateChecklistCounter();
+}
+
+function renderChecklistTodos(todos) {
+  const list = document.getElementById('clTodoList');
+  if (!list) return;
+
+  list.replaceChildren();
+  todos.forEach(todo => addChecklistTodo(todo, { silent: true }));
+  syncTodosCommentsReadonly();
+  updateChecklistCounter();
+}
+
+async function saveChecklistTodos() {
+  if (isLoading) return;
+
+  try {
+    const clTodos = Array.from(document.querySelectorAll('#clTodoList .cl-todo-item')).map(item => ({
+      id: item.dataset.todoId,
+      checked: item.querySelector('.cl-todo-checkbox')?.checked || false,
+      text: item.querySelector('.cl-todo-text')?.value || '',
+      comments: item.querySelector('.cl-todo-comments')?.value || ''
+    }));
+
+    await chrome.storage.local.set({ clTodos });
+  } catch (error) {
+    console.error('🔴 [SAVE] Error saving checklist todos:', error);
+  }
+}
+
+function syncTodosCommentsReadonly() {
+  const target = document.getElementById('clTodosComments');
+  if (!target) return;
+
+  const comments = Array.from(document.querySelectorAll('#clTodoList .cl-todo-comments'))
+    .map(textarea => textarea.value.trim())
+    .filter(Boolean);
+
+  target.value = comments.join('\n\n');
+}
+
+function updateChecklistCounter() {
+  const checkboxes = [
+    document.getElementById('clVerificarContexto'),
+    ...document.querySelectorAll('#clTodoList .cl-todo-checkbox'),
+    document.getElementById('clVerifItempaths'),
+    document.getElementById('clVerifComentarios'),
+    document.getElementById('clVerifQaLinks')
+  ].filter(Boolean);
+
+  const total = checkboxes.length;
+  const checked = checkboxes.filter(checkbox => checkbox.checked).length;
+  const pending = total - checked;
+  const counter = document.getElementById('clCounter');
+  if (!counter) return;
+
+  if (pending === 0) {
+    counter.textContent = 'Completado';
+    counter.className = 'cl-counter cl-counter-done';
+    return;
+  }
+
+  counter.textContent = `${pending} pendiente${pending === 1 ? '' : 's'}`;
+  counter.className = 'cl-counter cl-counter-pending';
+}
+
+async function resetChecklist() {
+  document.getElementById('clTodoList')?.replaceChildren();
+
+  const clTicketType = document.getElementById('clTicketType');
+  const clVerificarContexto = document.getElementById('clVerificarContexto');
+  const clItempaths = document.getElementById('clItempaths');
+  const clVerifItempaths = document.getElementById('clVerifItempaths');
+  const clVerifComentarios = document.getElementById('clVerifComentarios');
+  const clTodosComments = document.getElementById('clTodosComments');
+  const clVerifQaLinks = document.getElementById('clVerifQaLinks');
+
+  if (clTicketType) clTicketType.value = 'amend';
+  if (clVerificarContexto) clVerificarContexto.checked = false;
+  if (clItempaths) clItempaths.value = '';
+  if (clVerifItempaths) clVerifItempaths.checked = false;
+  if (clVerifComentarios) clVerifComentarios.checked = false;
+  if (clTodosComments) clTodosComments.value = '';
+  if (clVerifQaLinks) clVerifQaLinks.checked = false;
+
+  await chrome.storage.local.set({
+    clTicketType: 'amend',
+    clVerificarContexto: false,
+    clTodos: [],
+    clItempaths: '',
+    clVerifItempaths: false,
+    clVerifComentarios: false,
+    clVerifQaLinks: false
+  });
+  await chrome.storage.local.remove('clTodosComments');
+
+  updateChecklistCounter();
+  showChecklistMessage('Checklist reseteado', 'success');
+}
+
+function showChecklistMessage(message, type) {
+  const el = document.getElementById('clMessage');
+  if (!el) return;
+
   el.textContent = message;
   el.className = `result-message show ${type}`;
   setTimeout(() => el.classList.remove('show'), 3000);

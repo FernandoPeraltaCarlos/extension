@@ -13,7 +13,7 @@
       <button class="tab-button active" data-tab="tab1">Link Finder</button>
       <button class="tab-button" data-tab="tab2">Text Cleaner</button>
       <button class="tab-button" data-tab="tab3">Doc Search</button>
-      <button class="tab-button" data-tab="tab4">Function 4</button>
+      <button class="tab-button" data-tab="tab4">Ticket QC</button>
       <button class="tab-button" data-tab="tab5">Function 5</button>
       <button class="tab-button" data-tab="tab6">Function 6</button>
     </div>
@@ -142,10 +142,69 @@
         </div>
       </div>
 
-      <!-- Tab 4: Placeholder -->
+      <!-- Tab 4: Ticket QC -->
       <div id="tab4" class="tab-panel">
-        <h2>Function 4</h2>
-        <p>Coming soon...</p>
+        <h2>Ticket QC</h2>
+
+        <div class="panel-scroll">
+          <div class="form-group">
+            <label for="clTicketType">Tipo de ticket:</label>
+            <select id="clTicketType" class="cl-select">
+              <option value="amend">amend</option>
+              <option value="demise">demise</option>
+              <option value="new page">new page</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="clVerificarContexto">
+              Verificar contexto
+            </label>
+          </div>
+
+          <div class="cl-section-label">TODOs</div>
+          <div id="clTodoList"></div>
+          <button id="clAddTodoBtn" class="cl-add-btn">+ Add TODO</button>
+
+          <div class="form-group cl-itempaths-group">
+            <label for="clItempaths">Itempaths:</label>
+            <textarea id="clItempaths" placeholder="(opcional)"></textarea>
+          </div>
+
+          <div class="cl-section-label">Verificación</div>
+
+          <div class="cl-verif-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="clVerifItempaths">
+              ¿Los itempaths fueron agregados?
+            </label>
+          </div>
+
+          <div class="cl-verif-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="clVerifComentarios">
+              ¿Fueron agregados los comentarios?
+            </label>
+            <textarea id="clTodosComments" class="cl-verif-comments" readonly placeholder="Los comments de los TODOs aparecerán aquí..."></textarea>
+          </div>
+
+          <div class="cl-verif-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="clVerifQaLinks">
+              ¿Fueron agregados los QA links?
+            </label>
+          </div>
+        </div>
+
+        <div class="panel-footer">
+          <div class="button-group">
+            <button id="clResetBtn" class="btn btn-secondary">Reset</button>
+          </div>
+          <div id="clMessage" class="result-message"></div>
+        </div>
+
+        <div id="clCounter" class="cl-counter cl-counter-pending">Sin items</div>
       </div>
 
       <!-- Tab 5: Placeholder -->
